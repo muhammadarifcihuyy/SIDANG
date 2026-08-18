@@ -1,0 +1,474 @@
+# ACTIVITY DIAGRAM BERDASARKAN ROLE
+## Sistem Informasi Penilaian (SIPENA)
+
+> **Format Standar Akademik**:
+> Setiap diagram menggunakan **3 Jalur Partisi (*Swimlane*)**:
+> 1. 👤 **Pengguna (*User Role*)**
+> 2. 🖥️ **Aplikasi (*Frontend / Controller*)**
+> 3. ⚙️ **Backend & Basis Data (*Database / AI Service*)**
+
+---
+
+# 1. ACTIVITY DIAGRAM ROLE ADMIN
+
+Diagram ini memuat seluruh alur aktivitas **Admin**, dimulai dari autentikasi login, pengelolaan seluruh master data sistem (pengguna, kriteria penilaian, data penempatan), pengaturan sistem (logo & reset basis data), hingga logout.
+
+```mermaid
+flowchart TD
+    MulaiAdmin([Mulai]) --> A1
+
+    subgraph Pengguna["👤 Admin"]
+        A1[Membuka halaman login] --> A2[Memasukkan email dan kata sandi]
+        A2 --> A3[Menekan tombol Masuk]
+        A_ErrLogin[Menerima pesan gagal login] --> A2
+        A_Dash[Masuk ke Dasbor Utama Admin]
+        
+        A_Dash --> A_PilihMenu{Memilih menu aktivitas}
+
+        %% Menu 1: Pengguna
+        A_PilihMenu -- Kelola Pengguna --> A_User1[Melihat daftar seluruh pengguna]
+        A_User1 --> A_UserAksi{Pilih aksi pengguna}
+        A_UserAksi -- Tambah Pengguna --> A_UserTambah[Mengisi data username, nama, email, dan peran]
+        A_UserTambah --> A_UserSimpan[Menekan tombol Simpan]
+        A_UserAksi -- Edit Pengguna --> A_UserEdit[Mengubah data pengguna]
+        A_UserEdit --> A_UserUpdate[Menekan tombol Perbarui]
+        A_UserAksi -- Hapus Pengguna --> A_UserHapus[Menekan tombol Hapus pengguna]
+
+        %% Menu 2: Kriteria
+        A_PilihMenu -- Kelola Kriteria --> A_Krit1[Melihat daftar kriteria penilaian]
+        A_Krit1 --> A_KritAksi{Pilih aksi kriteria}
+        A_KritAksi -- Tambah Kriteria --> A_KritTambah[Mengisi nama kriteria, bobot persen, aturan, multi dokumen]
+        A_KritTambah --> A_KritSimpan[Menekan tombol Simpan]
+        A_KritAksi -- Edit Kriteria --> A_KritEdit[Mengubah data kriteria]
+        A_KritEdit --> A_KritUpdate[Menekan tombol Perbarui]
+        A_KritAksi -- Hapus Kriteria --> A_KritHapus[Menekan tombol Hapus kriteria]
+
+        %% Menu 3: Penempatan
+        A_PilihMenu -- Kelola Penempatan --> A_Pnp1[Melihat daftar data penempatan]
+        A_Pnp1 --> A_PnpAksi{Pilih aksi penempatan}
+        A_PnpAksi -- Tambah Penempatan --> A_PnpTambah[Mengisi nama penempatan, tugas, target bobot minimum]
+        A_PnpTambah --> A_PnpSimpan[Menekan tombol Simpan]
+        A_PnpAksi -- Edit Penempatan --> A_PnpEdit[Mengubah data penempatan]
+        A_PnpEdit --> A_PnpUpdate[Menekan tombol Perbarui]
+        A_PnpAksi -- Hapus Penempatan --> A_PnpHapus[Menekan tombol Hapus penempatan]
+
+        %% Menu 4: Pengaturan
+        A_PilihMenu -- Pengaturan Sistem --> A_Set1[Melihat halaman pengaturan sistem]
+        A_Set1 --> A_SetAksi{Pilih opsi pengaturan}
+        A_SetAksi -- Ubah Logo --> A_SetLogo[Mengunggah logo judul dan logo sidebar baru]
+        A_SetLogo --> A_SetSimpan[Menekan tombol Simpan Pengaturan]
+        A_SetAksi -- Reset Sistem --> A_SetReset[Menekan tombol Reset Basis Data]
+        A_SetReset --> A_SetKonfirm[Mengkonfirmasi tindakan reset]
+
+        %% Menu 5: Logout
+        A_PilihMenu -- Keluar Sistem --> A_Logout[Menekan tombol Keluar]
+        A_LogoutSelesai[Diarahkan kembali ke halaman login]
+    end
+
+    subgraph Aplikasi["🖥️ Aplikasi (Frontend / Controller)"]
+        B1[Menerima data kredensial] --> B2{Validasi format data}
+        B2 -- Tidak valid --> B_Err1[Menampilkan pesan format tidak sesuai]
+        B_Err1 --> A_ErrLogin
+        B2 -- Valid --> B3[Mengirimkan data ke backend]
+        
+        B_SuksesLogin[Membuat sesi login admin & meregenerasi token] --> B_ArahDash[Menampilkan Dasbor Admin]
+        B_ArahDash --> A_Dash
+        B_GagalLogin[Menampilkan pesan email/password salah] --> A_ErrLogin
+
+        %% Respon CRUD Pengguna
+        B_UserSimpan[Menerima & memvalidasi data pengguna baru] --> B_UserToDb[Meneruskan ke basis data]
+        B_UserUpdate[Menerima & memvalidasi data edit pengguna] --> B_UserUpdateDb[Meneruskan perubahan ke basis data]
+        B_UserHapus[Menerima permintaan hapus pengguna] --> B_UserHapusDb[Meneruskan perintah hapus ke basis data]
+        B_UserRespon[Menampilkan notifikasi data pengguna berhasil diperbarui] --> A_User1
+
+        %% Respon CRUD Kriteria
+        B_KritSimpan[Menerima & memvalidasi data kriteria baru] --> B_KritToDb[Meneruskan ke basis data]
+        B_KritUpdate[Menerima & memvalidasi data edit kriteria] --> B_KritUpdateDb[Meneruskan perubahan ke basis data]
+        B_KritHapus[Menerima permintaan hapus kriteria] --> B_KritHapusDb[Meneruskan perintah hapus ke basis data]
+        B_KritRespon[Menampilkan notifikasi kriteria berhasil diperbarui] --> A_Krit1
+
+        %% Respon CRUD Penempatan
+        B_PnpSimpan[Menerima & memvalidasi data penempatan baru] --> B_PnpToDb[Meneruskan ke basis data]
+        B_PnpUpdate[Menerima & memvalidasi data edit penempatan] --> B_PnpUpdateDb[Meneruskan perubahan ke basis data]
+        B_PnpHapus[Menerima permintaan hapus penempatan] --> B_PnpHapusDb[Meneruskan perintah hapus ke basis data]
+        B_PnpRespon[Menampilkan notifikasi penempatan berhasil diperbarui] --> A_Pnp1
+
+        %% Respon Pengaturan
+        B_LogoSimpan[Menerima file logo & memvalidasi format gambar] --> B_LogoToDb[Meneruskan file logo ke backend]
+        B_LogoRespon[Menampilkan notifikasi logo berhasil diperbarui] --> A_Set1
+        B_ResetSimpan[Menerima konfirmasi reset sistem] --> B_ResetToDb[Menjalankan perintah migrate:fresh]
+        B_ResetRespon[Mengarahkan ke halaman login awal] --> A_LogoutSelesai
+
+        %% Respon Logout
+        B_Logout[Menghapus sesi login & meregenerasi token] --> B_LogoutArah[Mengarahkan ke halaman login]
+        B_LogoutArah --> A_LogoutSelesai
+    end
+
+    subgraph Backend["⚙️ Backend & Basis Data"]
+        C1[Memeriksa email, password, dan hak akses admin] --> C2{Kredensial valid?}
+        C2 -- Tidak valid --> C_Gagal[Status autentikasi gagal]
+        C_Gagal --> B_GagalLogin
+        C2 -- Valid --> C_Sukses[Status autentikasi berhasil]
+        C_Sukses --> B_SuksesLogin
+
+        %% Database Pengguna
+        C_DbUserStore[(Menyimpan akun pengguna baru)] --> B_UserRespon
+        C_DbUserUpdate[(Memperbarui data pengguna)] --> B_UserRespon
+        C_DbUserDelete[(Menghapus data pengguna dan foto)] --> B_UserRespon
+
+        %% Database Kriteria
+        C_DbKritStore[(Menyimpan data kriteria penilaian baru)] --> B_KritRespon
+        C_DbKritUpdate[(Memperbarui data kriteria)] --> B_KritRespon
+        C_DbKritDelete[(Menghapus data kriteria)] --> B_KritRespon
+
+        %% Database Penempatan
+        C_DbPnpStore[(Menyimpan data penempatan baru)] --> B_PnpRespon
+        C_DbPnpUpdate[(Memperbarui data penempatan)] --> B_PnpRespon
+        C_DbPnpDelete[(Menghapus data penempatan)] --> B_PnpRespon
+
+        %% Database Pengaturan
+        C_DbLogo[(Menyimpan file logo baru dan update konfigurasi)] --> B_LogoRespon
+        C_DbReset[(Mereset seluruh tabel dan menjalankan seeder awal)] --> B_ResetRespon
+
+        %% Database Logout
+        C_DbLogout[(Menghapus catatan sesi aktif)] --> B_LogoutArah
+    end
+
+    A3 --> B1
+    B3 --> C1
+
+    A_UserSimpan --> B_UserSimpan
+    B_UserToDb --> C_DbUserStore
+    A_UserUpdate --> B_UserUpdate
+    B_UserUpdateDb --> C_DbUserUpdate
+    A_UserHapus --> B_UserHapus
+    B_UserHapusDb --> C_DbUserDelete
+
+    A_KritSimpan --> B_KritSimpan
+    B_KritToDb --> C_DbKritStore
+    A_KritUpdate --> B_KritUpdate
+    B_KritUpdateDb --> C_DbKritUpdate
+    A_KritHapus --> B_KritHapus
+    B_KritHapusDb --> C_DbKritDelete
+
+    A_PnpSimpan --> B_PnpSimpan
+    B_PnpToDb --> C_DbPnpStore
+    A_PnpUpdate --> B_PnpUpdate
+    B_PnpUpdateDb --> C_DbPnpUpdate
+    A_PnpHapus --> B_PnpHapus
+    B_PnpHapusDb --> C_DbPnpDelete
+
+    A_SetSimpan --> B_LogoSimpan
+    B_LogoToDb --> C_DbLogo
+    A_SetKonfirm --> B_ResetSimpan
+    B_ResetToDb --> C_DbReset
+
+    A_Logout --> B_Logout
+    B_Logout --> C_DbLogout
+
+    A_LogoutSelesai --> SelesaiAdmin([Selesai])
+```
+
+---
+
+# 2. ACTIVITY DIAGRAM ROLE PENANGGUNG JAWAB
+
+Diagram ini memuat alur aktivitas **Penanggung Jawab**, mulai dari autentikasi login, mengevaluasi berkas peserta, memicu penilaian otomatis dengan **Kecerdasan Buatan (Gemini AI)** & **Metode SAW**, penyesuaian bobot manual, penetapan penempatan peserta, penolakan peserta, hingga logout.
+
+```mermaid
+flowchart TD
+    MulaiPJ([Mulai]) --> A1
+
+    subgraph Pengguna["👤 Penanggung Jawab"]
+        A1[Membuka halaman login] --> A2[Memasukkan email dan kata sandi]
+        A2 --> A3[Menekan tombol Masuk]
+        A_ErrLogin[Menerima pesan gagal login] --> A2
+        A_Dash[Masuk ke Dasbor Penanggung Jawab]
+        
+        A_Dash --> A_MenuPeserta[Membuka menu Daftar Peserta Penilaian]
+        A_MenuPeserta --> A_LihatPeserta[Melihat daftar seluruh pengajuan berkas peserta]
+        A_LihatPeserta --> A_PilihPeserta[Memilih salah satu peserta untuk dievaluasi]
+        
+        A_PilihPeserta --> A_PilihAksi{Pilih tindakan evaluasi}
+
+        %% Aksi 1: Proses Penilaian AI + SAW
+        A_PilihAksi -- Penilaian Otomatis --> A_KlikAI[Menekan tombol Proses Penilaian Otomatis]
+        A_HasilAI[Melihat hasil nilai analisis per kriteria dan total bobot SAW] --> A_PilihAksi
+
+        %% Aksi 2: Ubah Bobot Manual
+        A_PilihAksi -- Penyesuaian Bobot --> A_InputBobot[Mengisi nilai bobot kriteria secara manual]
+        A_InputBobot --> A_SimpanBobot[Menekan tombol Simpan Bobot]
+        A_HasilBobot[Melihat total nilai bobot baru yang telah dihitung ulang] --> A_PilihAksi
+
+        %% Aksi 3: Tetapkan Penempatan
+        A_PilihAksi -- Tetapkan Penempatan --> A_PilihLokasi[Memilih lokasi penempatan yang sesuai]
+        A_PilihLokasi --> A_SimpanPenempatan[Menekan tombol Tetapkan Penempatan]
+        A_GagalTempat[Menerima pesan nilai peserta belum memenuhi target] --> A_PilihAksi
+        A_SuksesTempat[Menerima notifikasi peserta berhasil ditempatkan] --> A_LihatPeserta
+
+        %% Aksi 4: Tolak Peserta
+        A_PilihAksi -- Tolak Peserta --> A_KlikTolak[Menekan tombol Tolak Peserta]
+        A_KlikTolak --> A_KonfirmTolak[Mengkonfirmasi penolakan]
+        A_SuksesTolak[Menerima notifikasi peserta telah ditolak] --> A_LihatPeserta
+
+        %% Logout
+        A_LihatPeserta --> A_Logout[Menekan tombol Keluar]
+        A_LogoutSelesai[Diarahkan kembali ke halaman login]
+    end
+
+    subgraph Aplikasi["🖥️ Aplikasi (Frontend / Controller)"]
+        B1[Menerima kredensial login] --> B2[Mengirimkan data ke backend]
+        B_SuksesLogin[Membuat sesi login Penanggung Jawab] --> B_ArahDash[Menampilkan Dasbor Penanggung Jawab]
+        B_ArahDash --> A_Dash
+        B_GagalLogin[Menampilkan pesan login gagal] --> A_ErrLogin
+
+        B_GetPeserta[Mengambil daftar peserta penilaian] --> A_LihatPeserta
+
+        %% Proses AI
+        B_ProsesAI[Menerima permintaan penilaian otomatis] --> B_KumpulBerkas[Mengumpulkan berkas dokumen peserta]
+        B_KumpulBerkas --> B_KirimAI[Mengirim dokumen & aturan kriteria ke AI]
+        B_TerimaAI[Menerima nilai 0-1 dari AI] --> B_HitungSAW[Menghitung nilai akhir dengan Metode SAW]
+        B_HitungSAW --> B_SimpanHasil[Meneruskan hasil ke basis data]
+        B_TampilHasil[Menampilkan hasil nilai per kriteria ke layar] --> A_HasilAI
+
+        %% Proses Bobot Manual
+        B_BobotManual[Menerima bobot manual per kriteria] --> B_KonversiBobot[Mengonversi persen ke desimal & hitung total]
+        B_KonversiBobot --> B_SimpanBobotDb[Meneruskan ke basis data]
+        B_TampilBobot[Menampilkan notifikasi bobot diperbarui] --> A_HasilBobot
+
+        %% Proses Penetapan
+        B_VerifTempat[Menerima pilihan penempatan] --> B_CekSyarat[Memeriksa kelayakan nilai peserta]
+        B_CekSyarat -- Nilai kurang --> B_TolakTempat[Menampilkan pesan nilai tidak memenuhi syarat]
+        B_TolakTempat --> A_GagalTempat
+        B_CekSyarat -- Nilai cukup --> B_SimpanTempatDb[Meneruskan penetapan ke basis data]
+        B_TampilTempat[Menampilkan notifikasi penempatan berhasil] --> A_SuksesTempat
+
+        %% Proses Tolak
+        B_ProsesTolak[Menerima perintah penolakan peserta] --> B_SimpanTolakDb[Meneruskan ke basis data]
+        B_TampilTolak[Menampilkan notifikasi peserta ditolak] --> A_SuksesTolak
+
+        %% Logout
+        B_Logout[Menghapus sesi & token autentikasi] --> B_LogoutArah[Mengarahkan ke halaman login]
+        B_LogoutArah --> A_LogoutSelesai
+    end
+
+    subgraph Backend["⚙️ Backend, AI & Basis Data"]
+        C1[Memeriksa akun & peran Penanggung Jawab] --> C2{Kredensial valid?}
+        C2 -- Tidak --> C_Gagal[Status autentikasi gagal] --> B_GagalLogin
+        C2 -- Ya --> C_Sukses[Status autentikasi berhasil] --> B_SuksesLogin
+
+        C_DbGetPeserta[(Mengambil data penilaian peserta dari basis data)] --> B_GetPeserta
+
+        %% Layanan AI & SAW
+        C_GeminiAI[["Layanan Kecerdasan Buatan (Gemini AI) Menganalisis Dokumen"]]
+        C_DbStoreHasil[(Menyimpan nilai kriteria dan total bobot SAW)] --> B_TampilHasil
+
+        %% Basis Data Penyesuaian
+        C_DbStoreBobot[(Memperbarui detail bobot kriteria dan total nilai)] --> B_TampilBobot
+
+        %% Basis Data Penetapan
+        C_DbGetTarget[(Memeriksa target_bobot penempatan)] --> B_CekSyarat
+        C_DbStoreTempat[(Menyimpan penempatan_id dan mengubah flag_penilaian = 1)] --> B_TampilTempat
+
+        %% Basis Data Tolak
+        C_DbStoreTolak[(Mengatur bobot = 0, hapus penempatan, flag_penilaian = 2)] --> B_TampilTolak
+
+        %% Logout
+        C_DbLogout[(Menghapus sesi aktif)] --> B_LogoutArah
+    end
+
+    A3 --> B1
+    B2 --> C1
+    A_MenuPeserta --> C_DbGetPeserta
+
+    A_KlikAI --> B_ProsesAI
+    B_KirimAI --> C_GeminiAI
+    C_GeminiAI --> B_TerimaAI
+    B_SimpanHasil --> C_DbStoreHasil
+
+    A_SimpanBobot --> B_BobotManual
+    B_SimpanBobotDb --> C_DbStoreBobot
+
+    A_SimpanPenempatan --> B_VerifTempat
+    B_VerifTempat --> C_DbGetTarget
+    B_SimpanTempatDb --> C_DbStoreTempat
+
+    A_KonfirmTolak --> B_ProsesTolak
+    B_SimpanTolakDb --> C_DbStoreTolak
+
+    A_Logout --> B_Logout
+    B_Logout --> C_DbLogout
+
+    A_LogoutSelesai --> SelesaiPJ([Selesai])
+```
+
+---
+
+# 3. ACTIVITY DIAGRAM ROLE PESERTA (USER)
+
+Diagram ini memuat seluruh alur aktivitas **Peserta**, dimulai dari proses registrasi akun baru & verifikasi kode OTP email, login, mengunggah berkas penilaian per kriteria, memantau status pengajuan, melihat riwayat penilaian, memperbarui profil/kata sandi, hingga logout.
+
+```mermaid
+flowchart TD
+    MulaiPeserta([Mulai]) --> A_RegOrLogin{Sudah memiliki akun?}
+
+    subgraph Pengguna["👤 Peserta (User)"]
+        %% Alur Registrasi
+        A_RegOrLogin -- Belum punya akun --> A_BukaReg[Membuka formulir pendaftaran akun]
+        A_BukaReg --> A_IsiReg[Mengisi username, nama lengkap, email, password, foto profil]
+        A_IsiReg --> A_KlikDaftar[Menekan tombol Daftar]
+        A_RegGagal[Menerima pesan kesalahan pengisian] --> A_IsiReg
+        A_HalamanOTP[Melihat halaman verifikasi OTP]
+        A_HalamanOTP --> A_BukaEmail[Membuka kotak masuk email dan menyalin kode OTP 6 digit]
+        A_BukaEmail --> A_InputOTP[Memasukkan kode OTP pada formulir]
+        A_InputOTP --> A_KlikVerif[Menekan tombol Verifikasi OTP]
+        A_OTPGagal[Menerima pesan kode OTP salah/kedaluwarsa] --> A_InputOTP
+        A_KirimUlangOTP[Menekan tautan Kirim Ulang OTP] --> A_HalamanOTP
+        A_RegSukses[Menerima notifikasi email berhasil diverifikasi] --> A_BukaLogin
+
+        %% Alur Login
+        A_RegOrLogin -- Sudah punya akun --> A_BukaLogin[Membuka halaman login]
+        A_BukaLogin --> A_IsiLogin[Memasukkan email dan kata sandi]
+        A_IsiLogin --> A_KlikLogin[Menekan tombol Masuk]
+        A_LoginGagal[Menerima pesan email/password salah] --> A_IsiLogin
+        A_Dash[Masuk ke Dasbor Utama Peserta]
+
+        A_Dash --> A_PilihMenu{Memilih menu aktivitas}
+
+        %% Menu 1: Upload Berkas
+        A_PilihMenu -- Unggah Berkas --> A_BukaUpload[Membuka menu Unggah Berkas Penilaian]
+        A_AdaProses[Menerima pesan: Masih ada berkas yang sedang diproses] --> A_BukaStatus
+        A_FormUpload[Melihat formulir unggah berkas dan daftar kriteria]
+        A_FormUpload --> A_UnggahDok[Mengunggah dokumen bukti untuk setiap kriteria]
+        A_UnggahDok --> A_KirimBerkas[Menekan tombol Kirim Pengajuan]
+        A_UploadSukses[Melihat pesan berkas berhasil dikirim] --> A_BukaStatus
+
+        %% Menu 2: Status Penilaian
+        A_PilihMenu -- Status Penilaian --> A_BukaStatus[Membuka halaman Status Penilaian]
+        A_BukaStatus --> A_LihatStatus[Melihat status pengajuan terkini]
+        A_LihatStatus --> A_CekStatus{Status Pengajuan}
+        A_CekStatus -- Sedang Diproses --> A_Status0[Melihat keterangan: Berkas dalam proses penilaian]
+        A_CekStatus -- Ditempatkan --> A_Status1[Melihat hasil penempatan dan nilai akhir yang diperoleh]
+        A_CekStatus -- Ditolak --> A_Status2[Melihat keterangan ditolak & dapat mengajukan ulang]
+
+        %% Menu 3: Riwayat Penilaian
+        A_PilihMenu -- Riwayat Penilaian --> A_BukaRiwayat[Membuka menu Riwayat Penilaian]
+        A_BukaRiwayat --> A_LihatRiwayat[Melihat seluruh arsip pengajuan penilaian sebelumnya]
+
+        %% Menu 4: Profil
+        A_PilihMenu -- Kelola Profil --> A_BukaProfil[Membuka halaman profil]
+        A_BukaProfil --> A_AksiProfil{Pilih aksi profil}
+        A_AksiProfil -- Edit Profil --> A_EditProfil[Mengubah username, nama, foto profil]
+        A_EditProfil --> A_SimpanProfil[Menekan tombol Simpan Profil]
+        A_AksiProfil -- Ubah Password --> A_EditPass[Memasukkan password lama dan password baru]
+        A_EditPass --> A_SimpanPass[Menekan tombol Simpan Password]
+        A_ProfilSukses[Menerima notifikasi profil/password berhasil diperbarui] --> A_Dash
+
+        %% Menu 5: Logout
+        A_PilihMenu -- Keluar Sistem --> A_Logout[Menekan tombol Keluar]
+        A_LogoutSelesai[Diarahkan kembali ke halaman login]
+    end
+
+    subgraph Aplikasi["🖥️ Aplikasi (Frontend / Controller)"]
+        %% Registrasi
+        B_RegValid[Menerima data pendaftaran & validasi input] --> B_RegCek{Valid?}
+        B_RegCek -- Tidak --> B_RegErr[Menampilkan pesan kesalahan validasi] --> A_RegGagal
+        B_RegCek -- Ya --> B_RegDb[Meneruskan ke backend untuk simpan & kirim OTP]
+        B_TampilOTP[Menampilkan halaman verifikasi OTP] --> A_HalamanOTP
+        
+        B_VerifOTP[Menerima kode OTP] --> B_VerifCek[Meneruskan ke backend untuk pengecekan]
+        B_OTPErr[Menampilkan pesan kode OTP tidak valid] --> A_OTPGagal
+        B_OTPOk[Mengarahkan ke login dengan notifikasi sukses] --> A_RegSukses
+        B_ResendOTP[Memproses kirim ulang kode OTP] --> B_TampilOTP
+
+        %% Login
+        B_LoginValid[Menerima kredensial & validasi format] --> B_LoginDb[Meneruskan ke backend]
+        B_LoginErr[Menampilkan pesan email/kata sandi salah] --> A_LoginGagal
+        B_LoginOk[Membuat sesi peserta & meregenerasi token] --> B_ArahDash[Menampilkan Dasbor Peserta] --> A_Dash
+
+        %% Upload Berkas
+        B_CekAktif[Memeriksa apakah ada pengajuan aktif]
+        B_CekAktif -- Ada pengajuan aktif --> B_TolakUpload[Mengarahkan ke status penilaian] --> A_AdaProses
+        B_CekAktif -- Tidak ada pengajuan aktif --> B_TampilForm[Menampilkan form upload & kriteria] --> A_FormUpload
+        B_SimpanBerkas[Menerima berkas & simpan ke storage] --> B_SimpanPenilaianDb[Meneruskan transaksi ke basis data]
+        B_UploadOk[Mengarahkan ke status penilaian] --> A_UploadSukses
+
+        %% Status & Riwayat
+        B_GetStatus[Mengambil data penilaian terbaru peserta] --> A_LihatStatus
+        B_GetRiwayat[Mengambil riwayat seluruh penilaian peserta] --> A_LihatRiwayat
+
+        %% Profil
+        B_UpdateProfil[Menerima pembaruan data profil/password] --> B_UpdateProfilDb[Meneruskan ke basis data]
+        B_ProfilOk[Menampilkan notifikasi berhasil] --> A_ProfilSukses
+
+        %% Logout
+        B_Logout[Menghapus sesi & token aktif] --> B_LogoutArah[Mengarahkan ke halaman login] --> A_LogoutSelesai
+    end
+
+    subgraph Backend["⚙️ Backend & Basis Data"]
+        %% Database Registrasi & OTP
+        C_DbStoreUser[(Menyimpan data user baru role=3)] --> C_GenOTP[Membuat OTP 6 digit & simpan ke database]
+        C_GenOTP --> C_SendMail[["Mengirimkan Email OTP ke Peserta"]] --> B_TampilOTP
+        C_DbVerifOTP[(Memeriksa kecocokan OTP & expired_at)] --> C_CekOTP{Sesuai?}
+        C_CekOTP -- Tidak --> B_OTPErr
+        C_CekOTP -- Ya --> C_DbVerifSukses[(Update email_verified_at = now dan hapus OTP)] --> B_OTPOk
+        C_DbResend[(Memperbarui OTP baru dan kirim ulang email)] --> B_ResendOTP
+
+        %% Database Login
+        C_DbLogin[(Memeriksa email, password hash, dan email_verified_at)] --> C_CekLogin{Valid?}
+        C_CekLogin -- Tidak --> B_LoginErr
+        C_CekLogin -- Ya --> B_LoginOk
+
+        %% Database Upload Berkas
+        C_DbCekAktif[(Memeriksa pengajuan dengan flag_penilaian = 0)] --> B_CekAktif
+        C_DbStorePenilaian[(Menyimpan record penilaians, detail_penilaians, dan dokumens)] --> B_UploadOk
+
+        %% Database Status & Riwayat
+        C_DbGetStatus[(Mengambil penilaian terkini + relasi detail dokumen & penempatan)] --> B_GetStatus
+        C_DbGetRiwayat[(Mengambil seluruh riwayat penilaian milik user)] --> B_GetRiwayat
+
+        %% Database Profil
+        C_DbUpdateProfil[(Memperbarui data profil / hash password baru)] --> B_ProfilOk
+
+        %% Database Logout
+        C_DbLogout[(Menghapus sesi login)] --> B_LogoutArah
+    end
+
+    A_KlikDaftar --> B_RegValid
+    B_RegDb --> C_DbStoreUser
+    A_KlikVerif --> B_VerifOTP
+    B_VerifCek --> C_DbVerifOTP
+    A_KirimUlangOTP --> C_DbResend
+
+    A_KlikLogin --> B_LoginValid
+    B_LoginDb --> C_DbLogin
+
+    A_BukaUpload --> C_DbCekAktif
+    A_KirimBerkas --> B_SimpanBerkas
+    B_SimpanPenilaianDb --> C_DbStorePenilaian
+
+    A_BukaStatus --> C_DbGetStatus
+    A_BukaRiwayat --> C_DbGetRiwayat
+
+    A_SimpanProfil --> B_UpdateProfil
+    A_SimpanPass --> B_UpdateProfil
+    B_UpdateProfilDb --> C_DbUpdateProfil
+
+    A_Logout --> B_Logout
+    B_Logout --> C_DbLogout
+
+    A_Status0 --> SelesaiPeserta([Selesai])
+    A_Status1 --> SelesaiPeserta
+    A_Status2 --> SelesaiPeserta
+    A_LogoutSelesai --> SelesaiPeserta
+```
+
+---
+
+## 📌 Ringkasan Pemetaan Alur Berdasarkan Role
+
+| No | Role Pengguna | Ruang Lingkup Aktivitas (*Scope*) | Fitur Utama yang Dijalankan |
+| :--- | :--- | :--- | :--- |
+| **1** | **Admin** | Pengelolaan Master Data & Konfigurasi Sistem | • Login & Logout Admin<br>• Manajemen Pengguna (*CRUD Users*)<br>• Manajemen Kriteria Penilaian (*CRUD Kriteria*)<br>• Manajemen Posisi Penempatan (*CRUD Penempatan*)<br>• Pengaturan Tampilan Logo & Reset Sistem (*Fresh Migration*) |
+| **2** | **Penanggung Jawab** | Evaluasi & Pengambilan Keputusan Penilaian | • Login & Logout Penanggung Jawab<br>• Penilaian Otomatis Berkas dengan AI Gemini<br>• Perhitungan Nilai Akhir Berbobot (*Metode SAW*)<br>• Penyesuaian Bobot Kriteria secara Manual<br>• Penetapan Lokasi Penempatan Peserta<br>• Penolakan Berkas Pengajuan Peserta |
+| **3** | **Peserta (User)** | Pendaftaran & Pengajuan Penilaian Berkas | • Registrasi Akun & Verifikasi Kode OTP Email<br>• Login & Logout Peserta<br>• Pengunggahan Berkas Persyaratan per Kriteria<br>• Pemantauan Status Pengajuan Penilaian Terkini<br>• Pengecekan Riwayat Penilaian<br>• Pengelolaan Profil & Perubahan Kata Sandi |
